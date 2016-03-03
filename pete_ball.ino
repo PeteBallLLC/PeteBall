@@ -36,15 +36,27 @@ int currentIndex = midPoint; // where the ball is currently
 int ledPinsLength = 7;
 int ballSpeed = 250; // delay in ms (changed by potentiometer)
 
+// global colors
+uint32_t BLACK;
 uint32_t SALMON;
+uint32_t RED;
+uint32_t GREEN;
+uint32_t BLUE;
+uint32_t YELLOW;
 
 void setup() {
   Serial.begin(9600);
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
+  strip.setBrightness(64); //limit overall brightness
 
   // Color definitions
+  BLACK = strip.Color(0, 0, 0);
   SALMON = strip.Color(40, 20, 10);
+  RED = strip.Color(255, 0, 0);
+  GREEN = strip.Color(0, 255, 0);
+  BLUE = strip.Color(0, 0, 255);
+  YELLOW = strip.Color(128, 128, 0);
 
   strip.setPixelColor(midPoint, SALMON); // set the middle LED to on
 
@@ -102,7 +114,11 @@ void updateLeds() {
   // clear all LEDs first
   for (int i = 0; i < LED_COUNT; i++) {
     if (i == currentIndex) {
-      strip.setPixelColor(currentIndex, SALMON);   
+      if (ballDir == right) {
+        strip.setPixelColor(currentIndex, BLUE);
+      } else {
+        strip.setPixelColor(currentIndex, YELLOW);
+      }
     } else {
       strip.setPixelColor(i, 0, 0, 0); 
     }
