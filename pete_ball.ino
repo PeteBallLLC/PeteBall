@@ -34,13 +34,13 @@ volatile int leftEndPoint = -1; //keeps track of how far left we should move the
 volatile int rightEndPoint = LED_COUNT; //how far right
 const int midPoint = LED_COUNT / 2;
 
+int currentIndex = midPoint; // where the ball is currently
+int ballSpeed = 250; // delay in ms (changed by potentiometer)
+
 //Debounce
 volatile long leftLastTime = 0;
 volatile long rightLastTime = 0;
 const long debounceThreshold = ballSpeed + 50;
-
-int currentIndex = midPoint; // where the ball is currently
-int ballSpeed = 250; // delay in ms (changed by potentiometer)
 
 // global colors
 uint32_t BLACK;
@@ -49,6 +49,8 @@ uint32_t RED;
 uint32_t GREEN;
 uint32_t BLUE;
 uint32_t YELLOW;
+uint32_t PURPLE;
+uint32_t ORANGE;
 
 void setup() {
   Serial.begin(9600);
@@ -71,6 +73,8 @@ void setup() {
   GREEN = strip.Color(0, 255, 0);
   BLUE = strip.Color(0, 0, 255);
   YELLOW = strip.Color(128, 128, 0);
+  PURPLE = strip.Color(128, 0, 128);
+  ORANGE = strip.Color(200, 100, 0);
 
   strip.setPixelColor(midPoint, SALMON); // set the middle LED to on
 
@@ -126,15 +130,31 @@ void moveBall() {
 
 void updateLeds() {
   // clear all LEDs first
-  for (int i = leftEndPoint; i < rightEndPoint; i++) {
+  for (int i = 0; i < strip.numPixels(); i++) {
     if (i == currentIndex) {
       if (ballDir == right) {
-        strip.setPixelColor(currentIndex, BLUE);
+        strip.setPixelColor(i, ORANGE);
       } else {
-        strip.setPixelColor(currentIndex, YELLOW);
+        strip.setPixelColor(i, PURPLE);
       }
+    } else if (i <= leftEndPoint) {
+      strip.setPixelColor(i, PURPLE); 
+    } else if (i >= rightEndPoint) {
+      strip.setPixelColor(i, ORANGE);
+    } else if (i == leftEndPoint + 1) {
+      strip.setPixelColor(i, YELLOW);
+    } else if (i == leftEndPoint + 2) {
+      strip.setPixelColor(i, GREEN);
+    } else if (i == leftEndPoint + 3) {
+      strip.setPixelColor(i, YELLOW);
+    } else if (i == rightEndPoint - 1) {
+      strip.setPixelColor(i, YELLOW);
+    } else if (i == rightEndPoint - 2) {
+      strip.setPixelColor(i, GREEN);
+    } else if (i == rightEndPoint - 3) {
+      strip.setPixelColor(i, YELLOW);
     } else {
-      strip.setPixelColor(i, 0, 0, 0); 
+      strip.setPixelColor(i, BLACK);
     }
   }
 }
@@ -152,13 +172,20 @@ void leftPressed() {
   if ((currentIndex > midPoint) || ballDir == right) {
     // only allow capture attempt when ball is on your side and moving towards your end point
     return;
-  } else {
-    if ((currentIndex - 1) == leftEndPoint) {
-      //keep this point lit
-      ++leftEndPoint;
-      ++currentIndex;
-      ballDir = right;
-    }
+  }
+  
+  if (currentIndex == leftEndPoint + 1) {
+    ++leftEndPoint;
+    ++currentIndex;
+    ballDir = right;
+  } else if (currentIndex == leftEndPoint + 2) {
+    leftEndPoint += 3;
+    ++currentIndex;
+    ballDir = right;
+  } else if (currentIndex == leftEndPoint + 3) {
+    ++leftEndPoint;
+    ++currentIndex;
+    ballDir = right;
   }
 }
 
@@ -175,13 +202,20 @@ void rightPressed() {
   if ((currentIndex < midPoint) || ballDir == left) {
     // only allow capture attempt when ball is on your side and moving towards your end point
     return;
-  } else {
-    if ((currentIndex + 1) == rightEndPoint) {
-      //keep this point lit
-      --rightEndPoint;
-      --currentIndex;
-      ballDir = left;
-    }
+  } 
+
+  if (currentIndex == rightEndPoint - 1) {
+    --rightEndPoint;
+    --currentIndex;
+    ballDir = left;
+  } else if (currentIndex == rightEndPoint - 2) {
+    rightEndPoint -= 3;
+    --currentIndex;
+    ballDir = left;
+  } else if (currentIndex == rightEndPoint - 3) {
+    ++rightEndPoint;
+    --currentIndex;
+    ballDir = left;
   }
 }
 
