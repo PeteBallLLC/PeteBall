@@ -15,7 +15,7 @@
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-const int LED_COUNT = 21;
+const int LED_COUNT = 90;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, PIN, NEO_GRB + NEO_KHZ800);
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
@@ -213,7 +213,7 @@ void rightPressed() {
     --currentIndex;
     ballDir = left;
   } else if (currentIndex == rightEndPoint - 3) {
-    ++rightEndPoint;
+    --rightEndPoint;
     --currentIndex;
     ballDir = left;
   }
