@@ -4,6 +4,8 @@
 #endif
 
 #define PIN 6
+#define LEFT_BUTTON 3
+#define RIGHT_BUTTON 2
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
@@ -30,10 +32,14 @@ BallDirection ballDir; // tracks which direction the "ball" (light) is moving cu
 
 volatile int leftEndPoint = -1; //keeps track of how far left we should move the ball
 volatile int rightEndPoint = LED_COUNT; //how far right
-const int midPoint = 10;
+const int midPoint = LED_COUNT / 2;
+
+//Debounce
+volatile long leftLastTime = 0;
+volatile long rightLastTime = 0;
+const long debounceThreshold = ballSpeed + 50;
 
 int currentIndex = midPoint; // where the ball is currently
-int ledPinsLength = 7;
 int ballSpeed = 250; // delay in ms (changed by potentiometer)
 
 // global colors
@@ -50,6 +56,14 @@ void setup() {
   strip.show(); // Initialize all pixels to 'off'
   strip.setBrightness(64); //limit overall brightness
 
+  // Button inputs 
+  pinMode(LEFT_BUTTON, INPUT);
+  pinMode(RIGHT_BUTTON, INPUT);
+
+  // button interrupt definitions
+  attachInterrupt(digitalPinToInterrupt(LEFT_BUTTON), leftPressed, RISING);
+  attachInterrupt(digitalPinToInterrupt(RIGHT_BUTTON), rightPressed, RISING);
+
   // Color definitions
   BLACK = strip.Color(0, 0, 0);
   SALMON = strip.Color(40, 20, 10);
@@ -60,11 +74,11 @@ void setup() {
 
   strip.setPixelColor(midPoint, SALMON); // set the middle LED to on
 
-  // if analog input pin 0 is unconnected, random analog
+  // if analog input pin 1 is unconnected, random analog
   // noise will cause the call to randomSeed() to generate
   // different seed numbers each time the sketch runs.
   // randomSeed() will then shuffle the random function.
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(1));
   
   // determine starting direction randomly
   if (random(0, 100) < 50) {
@@ -112,7 +126,7 @@ void moveBall() {
 
 void updateLeds() {
   // clear all LEDs first
-  for (int i = 0; i < LED_COUNT; i++) {
+  for (int i = leftEndPoint; i < rightEndPoint; i++) {
     if (i == currentIndex) {
       if (ballDir == right) {
         strip.setPixelColor(currentIndex, BLUE);
@@ -125,15 +139,49 @@ void updateLeds() {
   }
 }
 
-void rainbow(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256; j++) {
-    for(i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, SALMON);
+// ISR for left Button
+void leftPressed() {
+  // debounce logic
+  long currentTime = millis();
+  if (currentTime - leftLastTime < debounceThreshold) {
+    return;
+  } else {
+    leftLastTime = currentTime;
+  }
+  
+  if ((currentIndex > midPoint) || ballDir == right) {
+    // only allow capture attempt when ball is on your side and moving towards your end point
+    return;
+  } else {
+    if ((currentIndex - 1) == leftEndPoint) {
+      //keep this point lit
+      ++leftEndPoint;
+      ++currentIndex;
+      ballDir = right;
     }
-    strip.show();
-    delay(wait);
+  }
+}
+
+// ISR for right Button
+void rightPressed() {
+  // debounce logic
+  long currentTime = millis();
+  if (currentTime - rightLastTime < debounceThreshold) {
+    return;
+  } else {
+    rightLastTime = currentTime;
+  }
+  
+  if ((currentIndex < midPoint) || ballDir == left) {
+    // only allow capture attempt when ball is on your side and moving towards your end point
+    return;
+  } else {
+    if ((currentIndex + 1) == rightEndPoint) {
+      //keep this point lit
+      --rightEndPoint;
+      --currentIndex;
+      ballDir = left;
+    }
   }
 }
 
